@@ -40,10 +40,11 @@ cp .env.example .local_data/config.env   # then fill in INFLUX_URL / INFLUX_TOKE
 ## Run (development)
 
 ```bash
-.venv/bin/uvicorn app.main:app --reload --port 8085
+.venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8085
 ```
 
-Open `http://localhost:8085/`.
+Open `http://localhost:8085/` (or `http://<host>:8085/` from another machine on the LAN -
+uvicorn only listens on `127.0.0.1` unless `--host 0.0.0.0` is passed explicitly).
 
 ## Deployment (Raspberry Pi, systemd)
 
