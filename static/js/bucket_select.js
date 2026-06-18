@@ -32,7 +32,7 @@ const BucketSelect = {
   },
 
   _applyRange() {
-    State.rangeStart = this.rangeStartInput.value || "-24h";
+    State.rangeStart = this.rangeStartInput.value || "-1h";
     State.rangeStop = this.rangeStopInput.value || "now()";
   },
 

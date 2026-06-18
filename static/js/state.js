@@ -1,6 +1,6 @@
 const State = {
   bucket: null,
-  rangeStart: "-24h",
+  rangeStart: "-1h",
   rangeStop: "now()",
   measurements: [],
   tags: {},
