@@ -25,12 +25,20 @@ const Api = {
     return Api._post("/api/points/query", selection);
   },
 
-  async getPointDetail(pointId) {
-    return Api._json(await fetch(`/api/points/${pointId}`));
+  exportOdsUrl(selection) {
+    return `/api/export/ods?selection_json=${encodeURIComponent(JSON.stringify(selection))}`;
   },
 
-  exportCsvUrl(selection) {
-    return `/api/export/csv?selection_json=${encodeURIComponent(JSON.stringify(selection))}`;
+  async exportOdsSelectedBlob(bucket, points) {
+    const response = await fetch("/api/export/ods/selected", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bucket, points }),
+    });
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+    return response.blob();
   },
 
   async previewDelete(selection) {
@@ -39,6 +47,14 @@ const Api = {
 
   async executeDelete(payload) {
     return Api._post("/api/delete/execute", payload);
+  },
+
+  async previewDeleteSelected(points) {
+    return Api._post("/api/delete/points/preview", { points });
+  },
+
+  async executeDeleteSelected(points, confirmToken) {
+    return Api._post("/api/delete/points/execute", { points, confirm_token: confirmToken });
   },
 
   async _post(url, body) {

@@ -1,9 +1,8 @@
 from influxdb_client import InfluxDBClient
 
-from app.models.points import FieldValue, PointDetail, PointRow, Selection, TimeRange
+from app.models.points import PointRow, Selection, TimeRange
 from app.utils.flux import flux_string
 from app.utils.point_id import encode_point_id
-from app.utils.time import ns_to_rfc3339
 
 RESERVED_COLUMNS = {"result", "table"}
 
@@ -74,42 +73,3 @@ def query_points(
     if truncated:
         rows = rows[:limit]
     return rows, truncated
-
-
-def get_point_detail(
-    client: InfluxDBClient, bucket: str, measurement: str, tags: dict[str, str], time_ns: int
-) -> PointDetail | None:
-    start = ns_to_rfc3339(time_ns)
-    # +1 microsecond, not +1ns: ns_to_rfc3339 truncates to microsecond precision,
-    # so a 1ns offset would round back to the same string as `start`.
-    stop = ns_to_rfc3339(time_ns + 1_000)
-
-    lines = [
-        f"from(bucket: {flux_string(bucket)})",
-        f"  |> range(start: {start}, stop: {stop})",
-        f"  |> filter(fn: (r) => r._measurement == {flux_string(measurement)})",
-    ]
-    for tag_key, tag_value in tags.items():
-        lines.append(f"  |> filter(fn: (r) => r[{flux_string(tag_key)}] == {flux_string(tag_value)})")
-    flux = "\n".join(lines)
-
-    tables = client.query_api().query(flux)
-    fields: dict[str, FieldValue] = {}
-    found_tags: dict[str, str] = {}
-    time_str = start
-    for table in tables:
-        for record in table.records:
-            found_tags = _record_tags(record)
-            fields[record.get_field()] = record.get_value()
-            time_str = record.get_time().isoformat().replace("+00:00", "Z")
-
-    if not fields:
-        return None
-
-    return PointDetail(
-        id=encode_point_id(bucket, measurement, found_tags, time_str),
-        measurement=measurement,
-        tags=found_tags,
-        fields=fields,
-        time=time_str,
-    )

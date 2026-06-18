@@ -1,17 +1,19 @@
 const ResultsTable = {
-  init(onRowClick) {
-    this.onRowClick = onRowClick;
+  init(onSelectionChanged) {
+    this.onSelectionChanged = onSelectionChanged ?? (() => {});
     this.tabulator = new Tabulator("#results-table", {
       layout: "fitDataStretch",
       height: "65vh",
       pagination: true,
       paginationSize: 50,
       paginationSizeSelector: [20, 50, 100, true],
+      selectableRows: true,
+      selectableRowsRangeMode: "click",
       columns: [{ title: "Measurement", field: "measurement" }],
       data: [],
     });
 
-    this.tabulator.on("rowClick", (event, row) => this.onRowClick(row.getData()));
+    this.tabulator.on("rowSelectionChanged", (data) => this.onSelectionChanged(data));
   },
 
   setRows(rows) {
@@ -38,5 +40,9 @@ const ResultsTable = {
 
     this.tabulator.setColumns(columns);
     this.tabulator.setData(data);
+  },
+
+  getSelectedRows() {
+    return this.tabulator.getSelectedData();
   },
 };

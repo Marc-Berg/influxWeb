@@ -22,12 +22,16 @@
       <input id="range-stop" type="text" value="now()" />
     </label>
     <button id="apply-query">Apply</button>
+    <span class="utc-note">All times shown here are UTC.</span>
   </header>
 
   <main>
     <section id="selection-panel">
       <h2>Browse / filter</h2>
-      <p class="status-line">Click to select. Alt+click a measurement to expand its tags.</p>
+      <p class="status-line">
+        Click to select, Ctrl+click to add/remove, Shift+click to select a range.
+        Alt+click a measurement to expand its tags.
+      </p>
       <div class="search-row">
         <input id="schema-search" type="text" placeholder="Filter..." />
         <button id="clear-selection" title="Clear filter and selection">&times;</button>
@@ -37,7 +41,7 @@
 
     <section id="results-panel">
       <div class="toolbar">
-        <button id="export-csv">Export CSV</button>
+        <button id="export-ods">Export ODS</button>
         <button id="delete-in-range" class="danger">Delete in range</button>
       </div>
       <p id="status-line" class="status-line"></p>
@@ -45,14 +49,9 @@
     </section>
   </main>
 
-  <aside id="detail-panel">
-    <button id="detail-close" class="close-button">&times;</button>
-    <div id="detail-content"></div>
-  </aside>
-
   <div id="delete-modal" class="modal-overlay">
     <div class="modal-box">
-      <h2>Delete points in range</h2>
+      <h2>Delete points</h2>
       <div id="delete-modal-body"></div>
       <div class="modal-actions">
         <button id="delete-modal-cancel">Cancel</button>
@@ -67,7 +66,6 @@
   <script src="/js/bucket_select.js"></script>
   <script src="/js/filter_builder.js"></script>
   <script src="/js/table.js"></script>
-  <script src="/js/detail_panel.js"></script>
   <script src="/js/modals/delete_confirm.js"></script>
   <script src="/js/main.js"></script>
 </body>

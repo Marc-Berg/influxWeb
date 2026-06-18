@@ -3,7 +3,8 @@
 A web-based admin UI for a local InfluxDB v2 instance. Built for editing smarthome
 telemetry (e.g. from ioBroker) without fighting the `influx` CLI: browse buckets,
 filter datapoints by measurement/tag, inspect and edit values, fix timestamps,
-delete ranges, and export/import CSV.
+delete ranges, and export/import data as ODS spreadsheets (for editing in
+LibreOffice Calc with correct types, no CSV locale/decimal-separator guessing).
 
 Runs as a small FastAPI backend + a static HTML/JS frontend (Tabulator.js), meant
 for LAN-only deployment on something like a Raspberry Pi — no login, no internet
@@ -13,16 +14,20 @@ exposure.
 
 Early development. Currently implemented:
 - Bucket selection
-- Measurement/tag schema browsing and selection (click or filter, with a clear/reset action)
+- Measurement/tag schema browsing and selection, file-explorer-style (click,
+  Ctrl+click, Shift+click), with a clear/reset action and a text filter
 - Time range selection
-- Querying and listing datapoints, with adjustable page size
-- Point detail view
-- CSV export
-- Delete points in a time range, with a preview (affected points, sample, resolved
-  time bounds) and explicit confirmation before anything is deleted
+- Querying and listing datapoints, with adjustable page size and multi-row
+  selection (same click/Ctrl/Shift model as the schema tree)
+- Export to ODS (whole query result, or just the selected rows), with proper
+  cell types (numbers, booleans, dates) and an instructions block describing
+  the round-trip contract for a later import
+- Delete points in a time range, or delete exactly the selected rows — both
+  with a preview (affected points, sample, resolved time bounds) and explicit
+  confirmation before anything is deleted
 
-Planned next: edit/add values, retime, timestamp normalization, CSV import — each
-behind the same preview/confirm pattern used for delete.
+Planned next: edit/add values, retime, timestamp normalization, ODS import —
+each behind the same preview/confirm pattern used for delete.
 
 ## Setup
 

@@ -32,17 +32,6 @@ class PointQueryResponse(BaseModel):
     truncated: bool
 
 
-class PointDetail(BaseModel):
-    id: str
-    measurement: str
-    tags: dict[str, str]
-    fields: dict[str, FieldValue]
-    time: str
-
-
-class PointWriteRequest(BaseModel):
+class ExportSelectedRequest(BaseModel):
     bucket: str
-    measurement: str
-    tags: dict[str, str]
-    fields: dict[str, FieldValue]
-    time: str
+    points: list[PointRow]

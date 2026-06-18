@@ -1,3 +1,39 @@
+function applyExplorerClick(container, count, isSelected, setSelected, isVisible, index, event) {
+  const ctrl = event.ctrlKey || event.metaKey;
+
+  if (event.shiftKey && container._anchorIndex !== null && container._anchorIndex !== undefined) {
+    // Range-select only over currently visible (e.g. text-filtered) items,
+    // so a hidden item between the anchor and the click doesn't get swept in.
+    const visible = [];
+    for (let i = 0; i < count; i++) if (isVisible(i)) visible.push(i);
+    const anchorPos = visible.indexOf(container._anchorIndex);
+    const clickedPos = visible.indexOf(index);
+
+    if (anchorPos === -1 || clickedPos === -1) {
+      for (let i = 0; i < count; i++) setSelected(i, i === index);
+      container._anchorIndex = index;
+      return;
+    }
+
+    const from = Math.min(anchorPos, clickedPos);
+    const to = Math.max(anchorPos, clickedPos);
+    if (!ctrl) {
+      for (let i = 0; i < count; i++) setSelected(i, false);
+    }
+    for (let pos = from; pos <= to; pos++) setSelected(visible[pos], true);
+    // Anchor intentionally stays put, like a file explorer: repeated
+    // shift-clicks keep extending the range from the same origin point.
+    return;
+  }
+
+  if (ctrl) {
+    setSelected(index, !isSelected(index));
+  } else {
+    for (let i = 0; i < count; i++) setSelected(i, i === index);
+  }
+  container._anchorIndex = index;
+}
+
 const FilterBuilder = {
   async render(onSelectionChanged) {
     this.container = document.getElementById("schema-tree");
@@ -13,9 +49,29 @@ const FilterBuilder = {
 
     const measurements = await Api.getMeasurements(State.bucket, State.rangeStart);
     this.container.innerHTML = "";
-    for (const measurement of measurements) {
-      this.container.appendChild(this._buildMeasurementNode(measurement));
-    }
+    this.container._anchorIndex = null;
+
+    const nodes = measurements.map((measurement) => this._buildMeasurementNode(measurement));
+    for (const { wrapper } of nodes) this.container.appendChild(wrapper);
+
+    nodes.forEach(({ node }, index) => {
+      node.addEventListener("click", (event) => {
+        if (event.altKey) return; // handled separately for expand/collapse
+        applyExplorerClick(
+          this.container,
+          measurements.length,
+          (i) => State.isMeasurementSelected(measurements[i]),
+          (i, value) => {
+            if (State.isMeasurementSelected(measurements[i]) !== value) State.toggleMeasurement(measurements[i]);
+            nodes[i].node.classList.toggle("selected", value);
+          },
+          (i) => nodes[i].node.style.display !== "none",
+          index,
+          event
+        );
+        this.onSelectionChanged();
+      });
+    });
   },
 
   _buildMeasurementNode(measurement) {
@@ -33,22 +89,17 @@ const FilterBuilder = {
     let loaded = false;
 
     node.addEventListener("click", async (event) => {
-      if (event.altKey) {
-        children.style.display = children.style.display === "none" ? "block" : "none";
-        if (!loaded && children.style.display === "block") {
-          loaded = true;
-          await this._loadTagKeys(measurement, children);
-        }
-        return;
+      if (!event.altKey) return;
+      children.style.display = children.style.display === "none" ? "block" : "none";
+      if (!loaded && children.style.display === "block") {
+        loaded = true;
+        await this._loadTagKeys(measurement, children);
       }
-      State.toggleMeasurement(measurement);
-      node.classList.toggle("selected");
-      this.onSelectionChanged();
     });
 
     wrapper.appendChild(node);
     wrapper.appendChild(children);
-    return wrapper;
+    return { wrapper, node };
   },
 
   async _loadTagKeys(measurement, container) {
@@ -70,6 +121,7 @@ const FilterBuilder = {
     const children = document.createElement("div");
     children.className = "tree-children";
     children.style.display = "none";
+    children._anchorIndex = null;
     let loaded = false;
 
     node.addEventListener("click", async () => {
@@ -79,9 +131,27 @@ const FilterBuilder = {
         children.textContent = "Loading...";
         const values = await Api.getTagValues(State.bucket, tagKey, measurement, State.rangeStart);
         children.innerHTML = "";
-        for (const value of values) {
-          children.appendChild(this._buildTagValueNode(tagKey, value));
-        }
+
+        const valueNodes = values.map((value) => this._buildTagValueNode(tagKey, value));
+        for (const valueNode of valueNodes) children.appendChild(valueNode);
+
+        valueNodes.forEach((valueNode, index) => {
+          valueNode.addEventListener("click", (event) => {
+            applyExplorerClick(
+              children,
+              values.length,
+              (i) => State.isTagValueSelected(tagKey, values[i]),
+              (i, selected) => {
+                if (State.isTagValueSelected(tagKey, values[i]) !== selected) State.toggleTagValue(tagKey, values[i]);
+                valueNodes[i].classList.toggle("selected", selected);
+              },
+              (i) => valueNodes[i].style.display !== "none",
+              index,
+              event
+            );
+            this.onSelectionChanged();
+          });
+        });
       }
     });
 
@@ -96,13 +166,6 @@ const FilterBuilder = {
     node.dataset.label = value.toLowerCase();
     node.textContent = value;
     if (State.isTagValueSelected(tagKey, value)) node.classList.add("selected");
-
-    node.addEventListener("click", () => {
-      State.toggleTagValue(tagKey, value);
-      node.classList.toggle("selected");
-      this.onSelectionChanged();
-    });
-
     return node;
   },
 

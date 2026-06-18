@@ -37,6 +37,12 @@ header input {
   padding: 0.3rem;
 }
 
+.utc-note {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: #b8c4d0;
+}
+
 main {
   display: flex;
   align-items: flex-start;
@@ -82,6 +88,9 @@ main {
   cursor: pointer;
   padding: 0.15rem 0.3rem;
   border-radius: 3px;
+  /* Without this, shift-click (used for range-select) also triggers the
+     browser's native text selection between the two clicked nodes. */
+  user-select: none;
 }
 
 .tree-node:hover {
@@ -115,46 +124,6 @@ main {
 .toolbar button {
   padding: 0.4rem 0.8rem;
   cursor: pointer;
-}
-
-#detail-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 360px;
-  height: 100%;
-  background: white;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
-  padding: 1rem;
-  overflow-y: auto;
-  transform: translateX(100%);
-  transition: transform 0.15s ease-out;
-}
-
-#detail-panel.open {
-  transform: translateX(0);
-}
-
-#detail-panel h2 {
-  font-size: 1rem;
-}
-
-#detail-panel dl {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.3rem 0.6rem;
-}
-
-#detail-panel dt {
-  font-weight: 600;
-}
-
-.close-button {
-  float: right;
-  cursor: pointer;
-  border: none;
-  background: none;
-  font-size: 1.1rem;
 }
 
 .status-line {
