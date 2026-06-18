@@ -6,6 +6,13 @@ from app.utils.point_id import encode_point_id
 
 RESERVED_COLUMNS = {"result", "table"}
 
+# Always enforced, regardless of what a caller requests: an unfiltered or very
+# broad selection on a large bucket can otherwise match millions of points and
+# exhaust memory on small devices (Flux's own limit() is per-table/series, not
+# a global cap, so it alone isn't a reliable safety net for high-cardinality
+# data - see query_points() below for the actual bound).
+MAX_QUERY_POINTS = 200_000
+
 
 def _record_tags(record) -> dict[str, str]:
     return {
@@ -50,26 +57,30 @@ def build_query_flux(selection: Selection, time_range: TimeRange, limit: int | N
 def query_points(
     client: InfluxDBClient, selection: Selection, time_range: TimeRange, limit: int | None
 ) -> tuple[list[PointRow], bool]:
-    flux = build_query_flux(selection, time_range, limit + 1 if limit else None)
-    tables = client.query_api().query(flux)
+    effective_limit = min(limit, MAX_QUERY_POINTS) if limit is not None else MAX_QUERY_POINTS
+    flux = build_query_flux(selection, time_range, effective_limit)
 
     rows: list[PointRow] = []
-    for table in tables:
-        for record in table.records:
-            tags = _record_tags(record)
-            time_str = record.get_time().isoformat().replace("+00:00", "Z")
-            rows.append(
-                PointRow(
-                    id=encode_point_id(selection.bucket, record.get_measurement(), tags, time_str),
-                    measurement=record.get_measurement(),
-                    tags=tags,
-                    field=record.get_field(),
-                    value=record.get_value(),
-                    time=time_str,
-                )
+    truncated = False
+    # query_stream() parses the response incrementally instead of loading the
+    # whole result into memory first, so this loop can stop as soon as the cap
+    # is hit instead of having already materialized everything by the time we
+    # get to iterate.
+    for record in client.query_api().query_stream(flux):
+        if len(rows) >= effective_limit:
+            truncated = True
+            break
+        tags = _record_tags(record)
+        time_str = record.get_time().isoformat().replace("+00:00", "Z")
+        rows.append(
+            PointRow(
+                id=encode_point_id(selection.bucket, record.get_measurement(), tags, time_str),
+                measurement=record.get_measurement(),
+                tags=tags,
+                field=record.get_field(),
+                value=record.get_value(),
+                time=time_str,
             )
+        )
 
-    truncated = limit is not None and len(rows) > limit
-    if truncated:
-        rows = rows[:limit]
     return rows, truncated

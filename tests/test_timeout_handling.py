@@ -6,7 +6,7 @@ from app.main import app
 
 
 class _TimingOutQueryApi:
-    def query(self, flux):
+    def query_stream(self, flux):
         raise ReadTimeoutError(pool=None, url=None, message="Read timed out.")
 
 

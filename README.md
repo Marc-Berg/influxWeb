@@ -18,7 +18,10 @@ Early development. Currently implemented:
   Ctrl+click, Shift+click), with a clear/reset action and a text filter
 - Time range selection
 - Querying and listing datapoints, with adjustable page size and multi-row
-  selection (same click/Ctrl/Shift model as the schema tree)
+  selection (same click/Ctrl/Shift model as the schema tree); capped at
+  200,000 points per query to keep memory use bounded regardless of how broad
+  a selection is — narrow the measurement/tag/time filter if a result comes
+  back marked as truncated
 - Export to ODS (whole query result, or just the selected rows), with proper
   cell types (numbers, booleans, dates) and an instructions block describing
   the round-trip contract for a later import
