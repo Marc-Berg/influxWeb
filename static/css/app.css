@@ -139,10 +139,50 @@ main {
   margin: 0.5rem 0;
 }
 
+.status-line.querying {
+  color: #1a5fb4;
+  font-weight: 600;
+}
+
+.status-line.querying::after {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-left: 0.5em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -0.1em;
+  animation: status-spin 0.7s linear infinite;
+}
+
+@keyframes status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-line.truncated {
+  display: inline-block;
+  color: #9a6700;
+  background: #fff3cd;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #f0d999;
+}
+
+.status-line.error {
+  color: #c0392b;
+  font-weight: 600;
+}
+
 button.danger {
   background: #c0392b;
   color: white;
   border: 1px solid #a93226;
+  margin-left: auto;
 }
 
 button.danger:disabled {

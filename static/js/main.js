@@ -13,19 +13,29 @@ function buildEffectiveSelection() {
   return selection;
 }
 
-async function applyQuery() {
+function setStatus(text, kind = "") {
   const status = document.getElementById("status-line");
+  status.textContent = text;
+  status.className = kind ? `status-line ${kind}` : "status-line";
+}
+
+async function applyQuery() {
   if (!State.bucket) return;
-  status.textContent = "Querying...";
+  setStatus("Querying...", "querying");
   try {
     const result = await Api.queryPoints(buildEffectiveSelection());
     ResultsTable.setRows(result.points);
     updateToolbarLabels(ResultsTable.getSelectedRows());
-    status.textContent = result.truncated
-      ? `Showing first ${result.points.length} points (truncated)`
-      : `${result.points.length} points`;
+    if (result.truncated) {
+      setStatus(
+        `Showing first ${result.points.length} points (truncated - narrow the selection or time range to see everything)`,
+        "truncated"
+      );
+    } else {
+      setStatus(`${result.points.length} points`);
+    }
   } catch (error) {
-    status.textContent = `Query failed: ${error.message}`;
+    setStatus(`Query failed: ${error.message}`, "error");
   }
 }
 
@@ -40,7 +50,6 @@ function downloadBlob(filename, blob) {
 
 async function exportOds() {
   if (!State.bucket) return;
-  const status = document.getElementById("status-line");
   const selectedRows = ResultsTable.getSelectedRows();
   // With nothing explicitly selected, export every row currently loaded in
   // the table - it's already fetched, so no extra (slow) server query is
@@ -50,7 +59,7 @@ async function exportOds() {
     const blob = await Api.exportOdsSelectedBlob(State.bucket, rows);
     downloadBlob("influxweb-export.ods", blob);
   } catch (error) {
-    status.textContent = `Export failed: ${error.message}`;
+    setStatus(`Export failed: ${error.message}`, "error");
   }
 }
 
@@ -64,7 +73,7 @@ function clearSelection() {
 
   ResultsTable.setRows([]);
   updateToolbarLabels([]);
-  document.getElementById("status-line").textContent = "Selection cleared - choose a measurement or tag value";
+  setStatus("Selection cleared - choose a measurement or tag value");
 }
 
 function updateToolbarLabels(selectedRows) {
