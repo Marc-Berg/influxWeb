@@ -55,8 +55,10 @@ def test_execute_delete_selected_deletes_every_point():
     assert len(client.delete_api_instance.calls) == 5
 
 
-def test_execute_delete_selected_runs_concurrently_not_one_by_one():
-    points = _make_points(16)
+def test_execute_delete_selected_runs_sequentially():
+    # Deliberately sequential, not concurrent - see app/services/delete.py
+    # for why a concurrent version was tried and reverted.
+    points = _make_points(8)
     preview = preview_delete_selected(points)
     client = _FakeDeleteClient(delay_seconds=0.05)
 
@@ -64,7 +66,4 @@ def test_execute_delete_selected_runs_concurrently_not_one_by_one():
     execute_delete_selected(client, "org", points, preview.confirm_token)
     elapsed = time.monotonic() - started
 
-    # Sequential would take 16 * 0.05s = 0.8s; concurrent (8-wide pool) takes
-    # about 2 batches (~0.1s) - generous bound below to avoid flakiness while
-    # still clearly failing if a regression makes this sequential again.
-    assert elapsed < 0.5
+    assert elapsed >= 8 * 0.05
