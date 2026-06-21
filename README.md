@@ -28,9 +28,30 @@ Early development. Currently implemented:
 - Delete points - either exactly the selected rows, or (with nothing selected)
   every row currently loaded in the table - with a preview and explicit
   confirmation before anything is deleted
+- Edit a value inline (double-click a cell in the Value column) with a
+  confirm-before-save step, or add a brand-new point via a separate modal -
+  both share the same write path (overwrite by measurement+tags+timestamp,
+  last-write-wins, same as InfluxDB itself)
 
-Planned next: edit/add values, retime, timestamp normalization, ODS import —
-each behind the same preview/confirm pattern used for delete.
+Planned next: retime, timestamp normalization, ODS import — each behind the
+same preview/confirm pattern used for delete.
+
+## Sorting
+
+Column headers use Tabulator's standard click behavior, not anything custom
+to influxWeb:
+- **Click** a header to sort by that column alone.
+- **Shift+click** another header to add it as a further sort level. The
+  most-recently Shift-clicked column becomes the new *primary* sort key, and
+  any columns sorted before it become tiebreakers underneath it.
+
+This takes a moment to get used to, but covers the common case of wanting to
+read one measurement's values in chronological order without any extra UI:
+
+1. Click **Time** to sort by it.
+2. Shift+click **Measurement**. Measurement becomes the primary sort, with
+   Time still applied underneath as the tiebreaker - so within each
+   measurement, rows come out time-ordered.
 
 ## Setup
 
