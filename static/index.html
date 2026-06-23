@@ -16,11 +16,21 @@
       </label>
       <label>
         Range start
-        <input id="range-start" type="text" value="-1h" />
+        <input
+          id="range-start"
+          type="text"
+          value="-1h"
+          title="Relative: -1h, -30m, -7d, -2w, -1mo, -1y, now() - or an absolute UTC timestamp, e.g. 2026-06-01T00:00:00Z"
+        />
       </label>
       <label>
         Range stop
-        <input id="range-stop" type="text" value="now()" />
+        <input
+          id="range-stop"
+          type="text"
+          value="now()"
+          title="Relative: -1h, -30m, -7d, -2w, -1mo, -1y, now() - or an absolute UTC timestamp, e.g. 2026-06-01T00:00:00Z"
+        />
       </label>
       <button id="apply-query" type="submit">Apply</button>
     </form>
