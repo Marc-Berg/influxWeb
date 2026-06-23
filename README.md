@@ -10,9 +10,13 @@ Runs as a small FastAPI backend + a static HTML/JS frontend (Tabulator.js), mean
 for LAN-only deployment on something like a Raspberry Pi — no login, no internet
 exposure.
 
-## Status
+This project was developed against an ioBroker InfluxDB-history setup specifically
+(e.g. its `ack`/`from`/`q` tag conventions show up in a couple of default-value
+choices) — it should work against any InfluxDB v2 instance, but has not yet been
+tested outside that one environment.
 
-Early development. Currently implemented:
+## Features
+
 - Bucket selection
 - Measurement/tag schema browsing and selection, file-explorer-style (click,
   Ctrl+click, Shift+click), with a clear/reset action and a text filter
@@ -22,6 +26,9 @@ Early development. Currently implemented:
   200,000 points per query to keep memory use bounded regardless of how broad
   a selection is — narrow the measurement/tag/time filter if a result comes
   back marked as truncated
+- A Statistical View toggle: instead of one row per point, one summary row
+  per measurement+field (count, and for numeric fields min/max/mean/standard
+  deviation) over the currently loaded query result
 - Export to ODS (whole query result, or just the selected rows), with proper
   cell types (numbers, booleans, dates) and an instructions block describing
   the round-trip contract for a later import
@@ -97,6 +104,24 @@ sudo systemctl enable --now influxweb
 
 influxWeb binds `0.0.0.0` by default — keep it reachable only from your LAN (no
 router port-forward); there is no authentication built in.
+
+### Upgrading
+
+```bash
+cd /opt/influxweb
+git pull
+.venv/bin/pip install -r requirements.txt
+sudo systemctl restart influxweb
+```
+
+Check the [Changelog](#changelog) below for anything version-specific to be aware
+of before upgrading. The current running version is shown in the page header.
+
+## Changelog
+
+### 0.1.0 (2026-06-23)
+
+Initial beta release.
 
 ## License
 

@@ -1,4 +1,8 @@
 const Api = {
+  async getVersion() {
+    return Api._json(await fetch("/api/version"));
+  },
+
   async getBuckets() {
     return Api._json(await fetch("/api/buckets"));
   },

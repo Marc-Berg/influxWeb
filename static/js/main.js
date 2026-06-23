@@ -191,7 +191,17 @@ function onTimeEdited(cell) {
   RetimeConfirmModal.open([point], () => cell.restoreOldValue());
 }
 
+async function showVersion() {
+  try {
+    const { version } = await Api.getVersion();
+    document.getElementById("version-badge").textContent = `v${version}`;
+  } catch {
+    // Cosmetic only - a failed fetch here shouldn't block the rest of the page.
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
+  showVersion();
   ResultsTable.init(
     (selectedRows) => updateToolbarLabels(selectedRows),
     (cell) => EditConfirmModal.open(cell),
