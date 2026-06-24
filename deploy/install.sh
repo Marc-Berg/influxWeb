@@ -25,7 +25,7 @@ done
 
 git clone "$REPO_URL" "$INSTALL_DIR"
 
-id -u "$SERVICE_USER" >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin/nologin "$SERVICE_USER"
+id -u "$SERVICE_USER" >/dev/null 2>&1 || useradd --system --no-create-home --home-dir "$INSTALL_DIR" --shell /usr/sbin/nologin "$SERVICE_USER"
 chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 
 sudo -u "$SERVICE_USER" python3 -m venv "$INSTALL_DIR/.venv"
