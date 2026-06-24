@@ -41,6 +41,21 @@ def test_time_cell_applies_winter_non_dst_offset(monkeypatch):
     assert cell.getAttribute("datevalue") == "2026-01-18T09:50:24.000000"
 
 
+def test_parse_time_accepts_a_bare_date_as_midnight(monkeypatch):
+    # Reproduces a real bug found via LibreOffice round-trip testing: Calc can
+    # re-serialize a cell whose time-of-day is exactly midnight (e.g. a monthly
+    # aggregate's start-of-month timestamp) as a bare date on save, dropping the
+    # "THH:MM:SS.ffffff" part our own export always writes - the parser must
+    # accept both forms, not just the one we happen to produce ourselves.
+    monkeypatch.setattr(ods_io, "LOCAL_ZONE", ZoneInfo("Europe/Berlin"))
+    time_cell = TableCell(valuetype="date", datevalue="2026-04-01")
+    time_ms_cell = ods_io._value_cell(0, "int", ods_io._setup_styles(_dummy_doc()))
+
+    result = ods_io._parse_time(time_cell, time_ms_cell)
+
+    assert rfc3339_to_ns(result) == rfc3339_to_ns("2026-03-31T22:00:00Z")
+
+
 def test_build_ods_instructions_mention_local_zone(monkeypatch):
     monkeypatch.setattr(ods_io, "LOCAL_ZONE", ZoneInfo("Europe/Berlin"))
     content = ods_io.build_ods("bucket1", [_make_row("2026-06-18T08:50:24Z")])

@@ -17,6 +17,7 @@ const ImportOdsModal = {
     this.preview = null;
     this.fileInput.value = "";
     this.confirmButton.disabled = true;
+    this.cancelButton.textContent = "Cancel";
     this.body.innerHTML = "<p>Choose an ODS file exported from this app.</p>";
     this.overlay.classList.add("open");
   },
@@ -48,9 +49,11 @@ const ImportOdsModal = {
     const preview = this.preview;
     const bucketWarning =
       State.bucket && !preview.buckets.includes(State.bucket)
-        ? `<p class="status-line error">Warning: this file references bucket(s)
-           ${preview.buckets.join(", ") || "(none)"}, not the currently selected
-           bucket "${State.bucket}".</p>`
+        ? `<p class="status-line error">This will import into bucket(s)
+           ${preview.buckets.join(", ") || "(none)"} - as recorded in the file's
+           "bucket" column - not into the currently selected bucket
+           "${State.bucket}". Edit the file's "bucket" column first if that's
+           not what you want.</p>`
         : "";
 
     const sampleRows = preview.sample
@@ -97,11 +100,29 @@ const ImportOdsModal = {
 
     try {
       const result = await Api.importOds(this.file, false);
-      this.close();
       this.onImported(result);
+      if (result.errors.length > 0) {
+        this._renderResult(result);
+      } else {
+        this.close();
+      }
     } catch (error) {
       this.body.innerHTML += `<p class="status-line error">Import failed: ${error.message}</p>`;
       this.confirmButton.disabled = false;
     }
+  },
+
+  _renderResult(result) {
+    const errorRows = result.errors
+      .map((error) => `<tr><td>${error.row_number}</td><td>${error.reason}</td></tr>`)
+      .join("");
+    this.cancelButton.textContent = "Close";
+    this.body.innerHTML = `
+      <p>${result.written_count} point(s) imported, ${result.errors.length} row(s) skipped:</p>
+      <table class="preview-table">
+        <thead><tr><th>Row</th><th>Reason</th></tr></thead>
+        <tbody>${errorRows}</tbody>
+      </table>
+    `;
   },
 };

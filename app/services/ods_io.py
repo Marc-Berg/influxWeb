@@ -233,7 +233,11 @@ def _parse_time(time_cell: TableCell, time_ms_cell: TableCell) -> str:
     date_value = time_cell.getAttribute("datevalue")
     if not date_value:
         raise ValueError("time cell has no date value")
-    dt_naive = datetime.strptime(date_value, "%Y-%m-%dT%H:%M:%S.%f")
+    # We always export the full "...THH:MM:SS.ffffff" form, but LibreOffice
+    # can re-serialize a cell whose time-of-day is exactly midnight (e.g. a
+    # monthly aggregate's start-of-month timestamp) as a bare date on save -
+    # fromisoformat() accepts both, strptime() with one fixed format doesn't.
+    dt_naive = datetime.fromisoformat(date_value)
     dt_local = dt_naive.replace(tzinfo=LOCAL_ZONE)
     millis = int(_parse_value_cell(time_ms_cell, "int"))
     dt_local = dt_local.replace(microsecond=millis * 1000)
