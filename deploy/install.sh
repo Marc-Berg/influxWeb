@@ -25,7 +25,13 @@ done
 
 git clone "$REPO_URL" "$INSTALL_DIR"
 
-id -u "$SERVICE_USER" >/dev/null 2>&1 || useradd --system --no-create-home --home-dir "$INSTALL_DIR" --shell /usr/sbin/nologin "$SERVICE_USER"
+if id -u "$SERVICE_USER" >/dev/null 2>&1; then
+  # Already exists, e.g. left over from an earlier install attempt - make sure
+  # its home dir still points at $INSTALL_DIR rather than a stale value.
+  usermod --home "$INSTALL_DIR" --shell /usr/sbin/nologin "$SERVICE_USER"
+else
+  useradd --system --no-create-home --home-dir "$INSTALL_DIR" --shell /usr/sbin/nologin "$SERVICE_USER"
+fi
 chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 
 sudo -u "$SERVICE_USER" python3 -m venv "$INSTALL_DIR/.venv"
