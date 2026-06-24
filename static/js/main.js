@@ -141,6 +141,9 @@ async function onPointSaved() {
 }
 
 async function onPointAdded() {
+  // The measurement name is free-text, so this can introduce one that didn't
+  // exist when the tree was last loaded - refresh it too, not just the query.
+  await FilterBuilder.render(applyQuery);
   await applyQuery();
   setStatus("Point added.");
 }
@@ -152,9 +155,13 @@ async function onPointsRetimed(count) {
 
 async function onOdsImported(result) {
   // The imported file may target a different bucket than the one currently
-  // shown - only re-query if it's relevant, otherwise just report the count.
+  // shown - only refresh if it's relevant, otherwise just report the count.
   const importedCurrentBucket = State.bucket && result.buckets.includes(State.bucket);
   if (importedCurrentBucket) {
+    // Re-render the measurement/tag tree too, not just the points query - an
+    // import can introduce a measurement name that didn't exist when the
+    // tree was last loaded, and applyQuery() alone wouldn't surface it.
+    await FilterBuilder.render(applyQuery);
     await applyQuery();
   }
   const errorNote = result.errors.length > 0 ? `, ${result.errors.length} row(s) skipped` : "";
@@ -162,6 +169,9 @@ async function onOdsImported(result) {
 }
 
 async function onRawImported(result) {
+  // Raw import always targets the active bucket (no per-row bucket column),
+  // so the tree refresh below is unconditional, unlike ODS import above.
+  await FilterBuilder.render(applyQuery);
   await applyQuery();
   setStatus(`${result.written_count} point(s) imported.`);
 }
