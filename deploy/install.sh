@@ -8,6 +8,10 @@ INSTALL_DIR="/opt/influxweb"
 REPO_URL="https://github.com/MyHomeMyData/influxWeb.git"
 SERVICE_USER="influxweb"
 
+GREEN='\033[0;32m'
+NC='\033[0m'
+step() { echo -e "${GREEN}==> $1${NC}"; }
+
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run this as root, e.g.: curl -sLf <url> | sudo bash -" >&2
   exit 1
@@ -23,8 +27,10 @@ for cmd in git python3; do
   command -v "$cmd" >/dev/null || { echo "$cmd is required but not installed." >&2; exit 1; }
 done
 
+step "Cloning influxWeb into $INSTALL_DIR..."
 git clone "$REPO_URL" "$INSTALL_DIR"
 
+step "Setting up the '$SERVICE_USER' system user..."
 if id -u "$SERVICE_USER" >/dev/null 2>&1; then
   # Already exists, e.g. left over from an earlier install attempt - make sure
   # its home dir still points at $INSTALL_DIR rather than a stale value.
@@ -34,13 +40,20 @@ else
 fi
 chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 
+step "Creating the Python virtual environment..."
 sudo -u "$SERVICE_USER" python3 -m venv "$INSTALL_DIR/.venv"
+
+step "Installing Python dependencies (this can take a minute, especially over a slow connection)..."
 sudo -u "$SERVICE_USER" "$INSTALL_DIR/.venv/bin/pip" install -r "$INSTALL_DIR/requirements.txt"
+
+step "Preparing the .env configuration file..."
 sudo -u "$SERVICE_USER" cp "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env"
 
+step "Installing the systemd service..."
 cp "$INSTALL_DIR/deploy/influxweb.service" /etc/systemd/system/influxweb.service
 systemctl daemon-reload
 
+step "Installing the influxweb-upgrade / influxweb-uninstall commands..."
 install -m 755 "$INSTALL_DIR/deploy/upgrade.sh" /usr/local/bin/influxweb-upgrade
 install -m 755 "$INSTALL_DIR/deploy/uninstall.sh" /usr/local/bin/influxweb-uninstall
 

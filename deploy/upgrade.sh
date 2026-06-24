@@ -6,6 +6,10 @@ set -euo pipefail
 INSTALL_DIR="/opt/influxweb"
 SERVICE_USER="influxweb"
 
+GREEN='\033[0;32m'
+NC='\033[0m'
+step() { echo -e "${GREEN}==> $1${NC}"; }
+
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run this as root, e.g.: sudo influxweb-upgrade" >&2
   exit 1
@@ -16,15 +20,20 @@ if [[ ! -d "$INSTALL_DIR" ]]; then
   exit 1
 fi
 
+step "Pulling the latest code..."
 sudo -u "$SERVICE_USER" git -C "$INSTALL_DIR" pull
+
+step "Updating Python dependencies..."
 sudo -u "$SERVICE_USER" "$INSTALL_DIR/.venv/bin/pip" install -r "$INSTALL_DIR/requirements.txt"
 
+step "Refreshing the systemd service and helper commands..."
 cp "$INSTALL_DIR/deploy/influxweb.service" /etc/systemd/system/influxweb.service
 # Re-install these helper scripts too, in case a future version changes their logic.
 install -m 755 "$INSTALL_DIR/deploy/upgrade.sh" /usr/local/bin/influxweb-upgrade
 install -m 755 "$INSTALL_DIR/deploy/uninstall.sh" /usr/local/bin/influxweb-uninstall
-
 systemctl daemon-reload
+
+step "Restarting the influxweb service..."
 systemctl restart influxweb
 
 echo "influxWeb upgraded and restarted. Check the Changelog in README.md for anything version-specific."

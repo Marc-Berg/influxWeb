@@ -114,9 +114,12 @@ into `sudo bash`, or want to adjust something along the way.
    sudo git clone https://github.com/MyHomeMyData/influxWeb.git /opt/influxweb
    ```
 2. Create a dedicated system user (matches `User=`/`Group=` in
-   `deploy/influxweb.service`) and hand it ownership of the install:
+   `deploy/influxweb.service`) and hand it ownership of the install. `--home-dir`
+   points it at `/opt/influxweb` itself, since that's the only directory it
+   owns - without it, tools like `pip` fall back to a non-existent default
+   home and disable their cache with a permissions warning:
    ```bash
-   sudo useradd --system --no-create-home --shell /usr/sbin/nologin influxweb
+   sudo useradd --system --no-create-home --home-dir /opt/influxweb --shell /usr/sbin/nologin influxweb
    sudo chown -R influxweb:influxweb /opt/influxweb
    ```
 3. Create the virtual environment and install dependencies:
