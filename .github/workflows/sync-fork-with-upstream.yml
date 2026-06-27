@@ -29,18 +29,20 @@ jobs:
           repo="MyHomeMyData/influxWeb"
           git remote add upstream "https://github.com/${repo}.git"
 
-      - name: Fetch upstream
-        run: git fetch upstream main
-
-      - name: Sync main with upstream main
+      - name: Fetch origin and upstream
         run: |
-          upstream_sha="$(git rev-parse upstream/main)"
-          current_sha="$(git rev-parse HEAD)"
+          git fetch origin main
+          git fetch upstream main
 
-          if [ "$upstream_sha" = "$current_sha" ]; then
+      - name: Mirror upstream main into fork main
+        run: |
+          origin_sha="$(git rev-parse refs/remotes/origin/main)"
+          upstream_sha="$(git rev-parse upstream/main)"
+
+          if [ "$upstream_sha" = "$origin_sha" ]; then
             echo "Fork is already up to date."
             exit 0
           fi
 
-          git merge --ff-only upstream/main
-          git push origin main
+          git checkout -B main upstream/main
+          git push --force-with-lease origin main
