@@ -191,68 +191,6 @@ cp .env.example .env   # then fill in INFLUX_URL / INFLUX_TOKEN / INFLUX_ORG
 Open `http://localhost:8085/` (or `http://<host>:8085/` from another machine on the LAN -
 uvicorn only listens on `127.0.0.1` unless `--host 0.0.0.0` is passed explicitly).
 
-## Docker
-
-Container setup lives in `docker/` and uses an Alpine-based Python image.
-
-1. Create runtime config from the example:
-  ```bash
-  mkdir -p .local_data
-  cp .env.example .local_data/config.env
-  ```
-  Then edit `.local_data/config.env` and fill in `INFLUX_URL`, `INFLUX_TOKEN`,
-  and `INFLUX_ORG`.
-
-2. Build and run with Docker Compose:
-  ```bash
-  docker compose --env-file .local_data/config.env -f docker/docker-compose.yml up -d --build
-  ```
-
-3. Open `http://<host>:8085/`.
-
-To stop it again:
-
-```bash
-docker compose --env-file .local_data/config.env -f docker/docker-compose.yml down
-```
-
-### Portainer stack
-
-For Portainer, use `docker/portainer-stack.yml` as Stack content.
-
-1. Open **Portainer -> Stacks -> Add stack**.
-2. Copy/paste the content from `docker/portainer-stack.yml`.
-3. Set `INFLUX_URL`, `INFLUX_TOKEN`, and `INFLUX_ORG` to your real values.
-4. Deploy the stack.
-
-Notes:
-- If InfluxDB runs on the Docker host, keep `INFLUX_URL=http://host.docker.internal:8086`.
-- If InfluxDB runs elsewhere, set `INFLUX_URL` to that host/IP instead.
-
-### GitHub Actions image build
-
-Two workflows build/publish the container image automatically:
-
-- `.github/workflows/docker-image.yml`: publishes to GHCR (`ghcr.io/<owner>/influxweb`) on push to `main` and version tags (`v*`). Pull requests build only (no push).
-- `.github/workflows/docker-image-dockerhub.yml`: publishes to Docker Hub (`<dockerhub-user>/influxweb`) on push to `main` and version tags (`v*`).
-- `.github/workflows/docker-image-release.yml`: publishes on GitHub Release (`published`) with release-tag-based Docker tags (for example `v1.2.3`) to GHCR, and additionally to Docker Hub when Docker Hub secrets are set.
-- `.github/workflows/sync-fork-with-upstream.yml`: for forked repos, merges `upstream/main` into fork `main` every 30 minutes (non-destructive for your own fork commits). That push to `main` triggers the Docker build workflows automatically.
-
-For this repository (`Marc-Berg/influxWeb`), the GHCR image is:
-
-- `ghcr.io/marc-berg/influxweb:latest`
-
-For Docker Hub publishing, set these repository secrets in GitHub:
-
-- `DOCKER_USERNAME`
-- `DOCKER_PASSWORD` (recommended: Docker Hub access token)
-
-If your upstream is different, edit `.github/workflows/sync-fork-with-upstream.yml` and change the `repo="MyHomeMyData/influxWeb"` line.
-
-Also ensure under **Settings -> Actions -> General -> Workflow permissions**:
-
-- **Read and write permissions** is enabled for `GITHUB_TOKEN`
-
 ## Changelog
 
 ### 0.1.0 (2026-06-24)
