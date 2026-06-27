@@ -34,7 +34,7 @@ jobs:
           git fetch origin main
           git fetch upstream main
 
-      - name: Mirror upstream main into fork main
+      - name: Merge upstream main into fork main
         run: |
           origin_sha="$(git rev-parse refs/remotes/origin/main)"
           upstream_sha="$(git rev-parse upstream/main)"
@@ -44,5 +44,6 @@ jobs:
             exit 0
           fi
 
-          git checkout -B main upstream/main
-          git push --force-with-lease origin main
+          git checkout main
+          git merge --no-edit upstream/main
+          git push origin main

@@ -236,7 +236,7 @@ Two workflows build/publish the container image automatically:
 - `.github/workflows/docker-image.yml`: publishes to GHCR (`ghcr.io/<owner>/influxweb`) on push to `main` and version tags (`v*`). Pull requests build only (no push).
 - `.github/workflows/docker-image-dockerhub.yml`: publishes to Docker Hub (`<dockerhub-user>/influxweb`) on push to `main` and version tags (`v*`).
 - `.github/workflows/docker-image-release.yml`: publishes on GitHub Release (`published`) with release-tag-based Docker tags (for example `v1.2.3`) to GHCR, and additionally to Docker Hub when Docker Hub secrets are set.
-- `.github/workflows/sync-fork-with-upstream.yml`: for forked repos, syncs `main` from upstream (`MyHomeMyData/influxWeb` by default) every 30 minutes. That push to `main` triggers the Docker build workflows automatically.
+- `.github/workflows/sync-fork-with-upstream.yml`: for forked repos, merges `upstream/main` into fork `main` every 30 minutes (non-destructive for your own fork commits). That push to `main` triggers the Docker build workflows automatically.
 
 For this repository (`Marc-Berg/influxWeb`), the GHCR image is:
 
