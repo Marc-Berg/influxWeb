@@ -1,0 +1,46 @@
+name: Sync fork with upstream
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          repo="MyHomeMyData/influxWeb"
+          git remote add upstream "https://github.com/${repo}.git"
+
+      - name: Fetch upstream
+        run: git fetch upstream main
+
+      - name: Sync main with upstream main
+        run: |
+          upstream_sha="$(git rev-parse upstream/main)"
+          current_sha="$(git rev-parse HEAD)"
+
+          if [ "$upstream_sha" = "$current_sha" ]; then
+            echo "Fork is already up to date."
+            exit 0
+          fi
+
+          git merge --ff-only upstream/main
+          git push origin main

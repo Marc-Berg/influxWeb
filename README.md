@@ -216,6 +216,19 @@ To stop it again:
 docker compose --env-file .local_data/config.env -f docker/docker-compose.yml down
 ```
 
+### Portainer stack
+
+For Portainer, use `docker/portainer-stack.yml` as Stack content.
+
+1. Open **Portainer -> Stacks -> Add stack**.
+2. Copy/paste the content from `docker/portainer-stack.yml`.
+3. Set `INFLUX_URL`, `INFLUX_TOKEN`, and `INFLUX_ORG` to your real values.
+4. Deploy the stack.
+
+Notes:
+- If InfluxDB runs on the Docker host, keep `INFLUX_URL=http://host.docker.internal:8086`.
+- If InfluxDB runs elsewhere, set `INFLUX_URL` to that host/IP instead.
+
 ### GitHub Actions image build
 
 Two workflows build/publish the container image automatically:
@@ -223,11 +236,22 @@ Two workflows build/publish the container image automatically:
 - `.github/workflows/docker-image.yml`: publishes to GHCR (`ghcr.io/<owner>/influxweb`) on push to `main` and version tags (`v*`). Pull requests build only (no push).
 - `.github/workflows/docker-image-dockerhub.yml`: publishes to Docker Hub (`<dockerhub-user>/influxweb`) on push to `main` and version tags (`v*`).
 - `.github/workflows/docker-image-release.yml`: publishes on GitHub Release (`published`) with release-tag-based Docker tags (for example `v1.2.3`) to GHCR, and additionally to Docker Hub when Docker Hub secrets are set.
+- `.github/workflows/sync-fork-with-upstream.yml`: for forked repos, syncs `main` from upstream (`MyHomeMyData/influxWeb` by default) every 30 minutes. That push to `main` triggers the Docker build workflows automatically.
+
+For this repository (`Marc-Berg/influxWeb`), the GHCR image is:
+
+- `ghcr.io/marc-berg/influxweb:latest`
 
 For Docker Hub publishing, set these repository secrets in GitHub:
 
 - `DOCKER_USERNAME`
 - `DOCKER_PASSWORD` (recommended: Docker Hub access token)
+
+If your upstream is different, edit `.github/workflows/sync-fork-with-upstream.yml` and change the `repo="MyHomeMyData/influxWeb"` line.
+
+Also ensure under **Settings -> Actions -> General -> Workflow permissions**:
+
+- **Read and write permissions** is enabled for `GITHUB_TOKEN`
 
 ## Changelog
 
