@@ -37,16 +37,12 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.image.outputs.name }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=branch
-            type=ref,event=tag
-            type=sha,format=short
+      - name: Read app version tag
+        id: version
+        run: |
+          version="$(python -c "import pathlib,re; t=pathlib.Path('app/version.py').read_text(); m=re.search(r'__version__\\s*=\\s*[\"\']([^\"\']+)[\"\']', t); print(m.group(1))")"
+          short="$(python -c "v='${version}'.split('.'); print('.'.join(v[:2]) if len(v) >= 2 else '${version}')")"
+          echo "tag=${short}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push image
         uses: docker/build-push-action@v6
@@ -55,5 +51,6 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ steps.image.outputs.name }}:latest
+            ${{ steps.image.outputs.name }}:${{ steps.version.outputs.tag }}
