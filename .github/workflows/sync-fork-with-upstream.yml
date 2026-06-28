@@ -20,6 +20,16 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Use PAT for push (triggers downstream workflows)
+        env:
+          SYNC_PUSH_TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
+        run: |
+          if [ -n "$SYNC_PUSH_TOKEN" ]; then
+            git remote set-url origin "https://x-access-token:${SYNC_PUSH_TOKEN}@github.com/${{ github.repository }}.git"
+          else
+            echo "SYNC_PUSH_TOKEN not set; using default GITHUB_TOKEN."
+          fi
+
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
