@@ -5,12 +5,14 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     environment:
-      INFLUX_URL: ${INFLUX_URL:-http://localhost:8086}
-      INFLUX_TOKEN: ${INFLUX_TOKEN:-replace-with-real-token}
-      INFLUX_ORG: ${INFLUX_ORG:-replace-with-real-org}
-      BIND_HOST: ${BIND_HOST:-0.0.0.0}
-      BIND_PORT: ${BIND_PORT:-8085}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      INFLUX_URL: http://host.docker.internal:8086
+      INFLUX_TOKEN: replace-with-real-token
+      INFLUX_ORG: replace-with-real-org
+      BIND_HOST: 0.0.0.0
+      BIND_PORT: 8085
+      LOG_LEVEL: info
     ports:
       - "8085:8085"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
