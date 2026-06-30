@@ -26,6 +26,26 @@ function setStatus(text, kind = "") {
 let queryToken = 0;
 const GROUP_BY_POINT_STORAGE_KEY = "influxweb.groupByPoint";
 
+// Tracks whether the status line is currently showing a "N points" message
+// (as opposed to "Select a measurement...", "Selection cleared...", an error,
+// etc.) - lets the Group-by-point toggle refresh the count in place without
+// re-querying the backend, while leaving unrelated messages alone.
+let showingPointsStatus = false;
+let lastQueryTruncated = false;
+
+function updatePointsStatus() {
+  if (!showingPointsStatus) return;
+  const total = ResultsTable.getDisplayedRowCount();
+  if (lastQueryTruncated) {
+    setStatus(
+      `Showing first ${total} points (truncated - narrow the selection or time range to see everything)`,
+      "truncated"
+    );
+  } else {
+    setStatus(`${total} points`);
+  }
+}
+
 async function applyQuery() {
   if (!State.bucket) return;
   const selection = buildEffectiveSelection();
@@ -35,26 +55,23 @@ async function applyQuery() {
     // "pick something first" stance clearSelection() already takes below.
     ResultsTable.setRows([]);
     StatsTable.setRows([]);
-    updateToolbarLabels([]);
+    updateToolbarLabels(0);
+    showingPointsStatus = false;
     setStatus("Select a measurement or tag value to see points");
     return;
   }
   const token = ++queryToken;
+  showingPointsStatus = false;
   setStatus("Querying...", "querying");
   try {
     const result = await Api.queryPoints(selection);
     if (token !== queryToken) return;
     ResultsTable.setRows(result.points);
     StatsTable.setRows(result.points);
-    updateToolbarLabels(ResultsTable.getSelectedRows());
-    if (result.truncated) {
-      setStatus(
-        `Showing first ${result.points.length} points (truncated - narrow the selection or time range to see everything)`,
-        "truncated"
-      );
-    } else {
-      setStatus(`${result.points.length} points`);
-    }
+    updateToolbarLabels(ResultsTable.getSelectedRowCount());
+    lastQueryTruncated = result.truncated;
+    showingPointsStatus = true;
+    updatePointsStatus();
   } catch (error) {
     if (token !== queryToken) return;
     setStatus(`Query failed: ${error.message}`, "error");
@@ -108,7 +125,8 @@ function clearSelection() {
 
   ResultsTable.setRows([]);
   StatsTable.setRows([]);
-  updateToolbarLabels([]);
+  updateToolbarLabels(0);
+  showingPointsStatus = false;
   setStatus("Selection cleared - choose a measurement or tag value");
 }
 
@@ -133,15 +151,14 @@ function setView(mode) {
   }
 }
 
-function updateToolbarLabels(selectedRows) {
-  const count = selectedRows.length;
+function updateToolbarLabels(count) {
   if (count > 0) {
     document.getElementById("export-ods").textContent = `Export ODS selected (${count})`;
     document.getElementById("retime-in-range").textContent = `Retime selected (${count})`;
     document.getElementById("delete-in-range").textContent = `Delete selected (${count})`;
     return;
   }
-  const total = ResultsTable.getAllRows().length;
+  const total = ResultsTable.getDisplayedRowCount();
   document.getElementById("export-ods").textContent = `Export ODS all (${total})`;
   document.getElementById("retime-in-range").textContent = `Retime all (${total})`;
   document.getElementById("delete-in-range").textContent = `Delete all (${total})`;
@@ -224,11 +241,7 @@ async function showVersion() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   showVersion();
-  ResultsTable.init(
-    (selectedRows) => updateToolbarLabels(selectedRows),
-    (cell) => EditConfirmModal.open(cell),
-    (cell) => onTimeEdited(cell)
-  );
+  ResultsTable.init(updateToolbarLabels, (cell) => EditConfirmModal.open(cell), (cell) => onTimeEdited(cell));
   DeleteConfirmModal.init(applyQuery);
   EditConfirmModal.init(onPointSaved);
   AddPointModal.init(onPointAdded);
@@ -248,7 +261,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const enabled = groupByPointInput.checked;
     ResultsTable.setGroupByPoint(enabled);
     localStorage.setItem(GROUP_BY_POINT_STORAGE_KEY, enabled ? "1" : "0");
-    updateToolbarLabels(ResultsTable.getSelectedRows());
+    updateToolbarLabels(ResultsTable.getSelectedRowCount());
+    updatePointsStatus();
   });
 
   await BucketSelect.init(async () => {

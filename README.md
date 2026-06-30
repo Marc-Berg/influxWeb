@@ -205,6 +205,16 @@ uvicorn only listens on `127.0.0.1` unless `--host 0.0.0.0` is passed explicitly
 
 ## Changelog
 
+### 0.2.2 (2026-06-30)
+
+(MyHomeMyData) Fixed several point-count inconsistencies introduced by 0.2.0's
+"Group fields by point" toggle: the toolbar buttons, Retime/Delete dialogs, and
+the points-loaded status line could show the raw per-field row count instead of
+the logical point count, and toggling grouping didn't refresh the status line
+(in one case leaving "Querying..." stuck after a query that legitimately
+returned zero points). Also fixed Delete sending one redundant delete call per
+field of a point instead of one per point.
+
 ### 0.2.1 (2026-06-30)
 
 (MyHomeMyData) Added a warning in the Retime confirmation dialog when a hand-edited
