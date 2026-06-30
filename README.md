@@ -20,8 +20,8 @@ information, instead of fields" enabled in the InfluxDB adapter's Expert config 
 are best supported. With that option disabled, browsing/querying, Export, Import,
 Edit, Retime, and Delete all still work correctly — but "+ Add point" should not be
 used, since it assumes the tag-based convention and has no way to create a complete
-multi-field point in one step. The Data View also shows one row per field rather than
-one row per logical reading in that mode (cosmetic only).
+multi-field point in one step. The Data View shows one row per field by default in
+that mode; enable "Group fields by point" to see one row per logical reading instead.
 
 ## Features
 
@@ -37,6 +37,10 @@ one row per logical reading in that mode (cosmetic only).
 - A Statistical View toggle: instead of one row per point, one summary row
   per measurement+field (count, and for numeric fields min/max/mean/standard
   deviation) over the currently loaded query result
+- A "Group fields by point" toggle: pivots the Data View from one row per
+  field to one row per logical reading (fields as columns) - mainly useful
+  for ioBroker buckets using field-based storage, where each point otherwise
+  shows as several separate rows. Off by default, remembered across visits
 - Export to ODS (whole query result, or just the selected rows), with proper
   cell types (numbers, booleans, dates) and an instructions block describing
   the round-trip contract for a later import
@@ -200,6 +204,12 @@ Open `http://localhost:8085/` (or `http://<host>:8085/` from another machine on 
 uvicorn only listens on `127.0.0.1` unless `--host 0.0.0.0` is passed explicitly).
 
 ## Changelog
+
+### 0.2.0 (2026-06-30)
+
+Added a "Group fields by point" Data View toggle (contributed by Marc Berg),
+pivoting one row per field into one row per logical reading - mainly useful for
+ioBroker buckets using field-based storage.
 
 ### 0.1.1 (2026-06-28)
 
