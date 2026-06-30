@@ -86,7 +86,7 @@ const ResultsTable = {
       this._render();
     });
 
-    this.tabulator.on("rowSelectionChanged", () => this.onSelectionChanged(this.getSelectedRows()));
+    this.tabulator.on("rowSelectionChanged", () => this.onSelectionChanged(this.getSelectedRowCount()));
     this.tabulator.on("cellEdited", (cell) => {
       if (this.groupByPoint && cell.getField().startsWith("field_")) {
         const wrappedCell = this._wrapGroupedValueCell(cell);
@@ -321,6 +321,20 @@ const ResultsTable = {
 
   getAllRows() {
     return [...this.rawRows];
+  },
+
+  // Counts what's actually shown as rows on screen (one per point when
+  // grouped, one per field otherwise) - distinct from getSelectedRows()/
+  // getAllRows() above, which always expand back to raw per-field rows
+  // because that's what Export/Delete/Retime need to act on. Toolbar labels
+  // and dialogs use these instead, so the number a user sees always matches
+  // what they visually selected, regardless of view mode.
+  getSelectedRowCount() {
+    return this.tabulator ? this.tabulator.getSelectedData().length : 0;
+  },
+
+  getDisplayedRowCount() {
+    return this.tabulator ? this.tabulator.getData().length : 0;
   },
 
   // Groups rows into one entry per InfluxDB point (same measurement+tags+time),

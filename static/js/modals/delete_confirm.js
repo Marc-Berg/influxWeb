@@ -23,12 +23,19 @@ const DeleteConfirmModal = {
       // loaded in the table - it's already fetched, so no extra server query
       // is needed to find out what would be deleted.
       this.displayRows = selectedRows.length > 0 ? selectedRows : ResultsTable.getAllRows();
-      this.points = this.displayRows.map((row) => ({
-        bucket: State.bucket,
-        measurement: row.measurement,
-        tags: row.tags,
-        time: row.time,
-      }));
+      // Deleting is by measurement+tags+time (a whole point, every field at
+      // once - see the note in the preview below), so several raw rows of
+      // the same point would otherwise turn into redundant delete calls for
+      // an already-deleted point, and inflate the displayed/confirmed count
+      // beyond the number of points actually affected.
+      const seenKeys = new Set();
+      this.points = [];
+      for (const row of this.displayRows) {
+        const key = pointKey(row.measurement, row.tags, row.time);
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        this.points.push({ bucket: State.bucket, measurement: row.measurement, tags: row.tags, time: row.time });
+      }
       this.preview = await Api.previewDeleteSelected(this.points);
       this._renderPreview();
       this.confirmButton.disabled = this.preview.matched_count === 0;
