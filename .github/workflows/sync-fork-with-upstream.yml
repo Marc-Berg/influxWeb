@@ -21,14 +21,17 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Use PAT for push (triggers downstream workflows)
+      - name: Configure push authentication
+        id: push_auth
         env:
           SYNC_PUSH_TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
         run: |
           if [ -n "$SYNC_PUSH_TOKEN" ]; then
             git remote set-url origin "https://x-access-token:${SYNC_PUSH_TOKEN}@github.com/${{ github.repository }}.git"
+            echo "uses_pat=true" >> "$GITHUB_OUTPUT"
           else
             echo "SYNC_PUSH_TOKEN not set; using default GITHUB_TOKEN."
+            echo "uses_pat=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Configure Git
@@ -65,14 +68,12 @@ jobs:
           echo "merged=true" >> "$GITHUB_OUTPUT"
 
       - name: Trigger Docker build workflows
-        if: steps.merge_upstream.outcome == 'success' && steps.merge_upstream.outputs.merged == 'true' && env.SYNC_PUSH_TOKEN == ''
+        if: steps.merge_upstream.outcome == 'success' && steps.merge_upstream.outputs.merged == 'true' && steps.push_auth.outputs.uses_pat == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SYNC_PUSH_TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
         run: |
-          echo "Triggering Docker build workflows..."
+          echo "Triggering Docker build workflow..."
           gh workflow run docker-image.yml --ref main
-          gh workflow run docker-image-dockerhub.yml --ref main || true
 
       - name: Create issue on merge conflict
         if: steps.merge_upstream.outcome == 'failure'
